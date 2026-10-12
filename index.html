@@ -1,0 +1,285 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Study Planner</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f3f4fb;
+  color: #252746;
+}
+
+header {
+  background: #6558d3;
+  color: white;
+  padding: 24px;
+  text-align: center;
+}
+
+.container {
+  max-width: 850px;
+  margin: 25px auto;
+  padding: 15px;
+}
+
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 14px;
+  margin-bottom: 18px;
+  box-shadow: 0 4px 15px #2222220d;
+}
+
+input, button {
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 15px;
+  margin: 5px 0;
+}
+
+input {
+  border: 1px solid #ccc;
+  max-width: 100%;
+}
+
+button {
+  border: none;
+  background: #6558d3;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #4b3eb5;
+}
+
+#taskInput {
+  width: 65%;
+}
+
+li {
+  padding: 10px;
+  margin: 8px 0;
+  background: #f3f4fb;
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+
+li button {
+  margin-left: 8px;
+}
+
+.done {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.progress-bg {
+  background: #e4e2f5;
+  height: 12px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+#progressBar {
+  height: 100%;
+  width: 0%;
+  background: #6558d3;
+  transition: width 0.3s;
+}
+
+@media (max-width: 500px) {
+  #taskInput {
+    width: 100%;
+  }
+}
+</style>
+</head>
+
+<body>
+<header>
+  <h1>📚 My Study Planner</h1>
+  <p>Plan your day. Achieve your goals!</p>
+</header>
+
+<main class="container">
+
+  <section class="card">
+    <h2>Today's Overview</h2>
+    <p id="today"></p>
+    <p>Completed tasks: <strong id="count">0 / 0</strong></p>
+    <div class="progress-bg">
+      <div id="progressBar"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>➕ Add Study Task</h2>
+    <input id="taskInput"
+           type="text"
+           placeholder="e.g. Study Data Structures">
+    <button onclick="addTask()">Add Task</button>
+    <ul id="taskList"></ul>
+  </section>
+
+  <section class="card">
+    <h2>🎯 My Subjects</h2>
+    <input id="subjectInput"
+           type="text"
+           placeholder="e.g. Mathematics">
+    <button onclick="addSubject()">Add Subject</button>
+    <ul id="subjectList"></ul>
+  </section>
+
+  <section class="card">
+    <h2>📝 Daily Motivation</h2>
+    <p id="quote">Small steps every day lead to big results!</p>
+    <button onclick="changeQuote()">New Motivation</button>
+  </section>
+
+</main>
+
+<script>
+const taskList = document.getElementById("taskList");
+const subjectList = document.getElementById("subjectList");
+
+let tasks = JSON.parse(localStorage.getItem("studyTasks") || "[]");
+let subjects = JSON.parse(localStorage.getItem("studySubjects") || "[]");
+
+function saveData() {
+  localStorage.setItem("studyTasks", JSON.stringify(tasks));
+  localStorage.setItem("studySubjects", JSON.stringify(subjects));
+}
+
+function addTask() {
+  const input = document.getElementById("taskInput");
+  const value = input.value.trim();
+
+  if (!value) {
+    alert("Please enter a study task!");
+    return;
+  }
+
+  tasks.push({ text: value, done: false });
+  input.value = "";
+  saveData();
+  renderTasks();
+}
+
+function toggleTask(index) {
+  tasks[index].done = !tasks[index].done;
+  saveData();
+  renderTasks();
+}
+
+function deleteTask(index) {
+  tasks.splice(index, 1);
+  saveData();
+  renderTasks();
+}
+
+function renderTasks() {
+  taskList.replaceChildren();
+
+  tasks.forEach((task, index) => {
+    const li = document.createElement("li");
+    const label = document.createElement("span");
+    label.textContent = task.text;
+    if (task.done) label.classList.add("done");
+
+    const complete = document.createElement("button");
+    complete.textContent = task.done ? "Undo" : "Done";
+    complete.onclick = () => toggleTask(index);
+
+    const remove = document.createElement("button");
+    remove.textContent = "Delete";
+    remove.onclick = () => deleteTask(index);
+
+    li.append(label, complete, remove);
+    taskList.appendChild(li);
+  });
+
+  const completed = tasks.filter(task => task.done).length;
+  document.getElementById("count").textContent =
+    `${completed} / ${tasks.length}`;
+
+  const percent = tasks.length
+    ? (completed / tasks.length) * 100
+    : 0;
+
+  document.getElementById("progressBar").style.width =
+    percent + "%";
+}
+
+function addSubject() {
+  const input = document.getElementById("subjectInput");
+  const value = input.value.trim();
+
+  if (!value) {
+    alert("Please enter a subject!");
+    return;
+  }
+
+  subjects.push(value);
+  input.value = "";
+  saveData();
+  renderSubjects();
+}
+
+function deleteSubject(index) {
+  subjects.splice(index, 1);
+  saveData();
+  renderSubjects();
+}
+
+function renderSubjects() {
+  subjectList.replaceChildren();
+
+  subjects.forEach((subject, index) => {
+    const li = document.createElement("li");
+    li.textContent = subject + " ";
+
+    const remove = document.createElement("button");
+    remove.textContent = "Delete";
+    remove.onclick = () => deleteSubject(index);
+
+    li.appendChild(remove);
+    subjectList.appendChild(li);
+  });
+}
+
+const quotes = [
+  "Small steps every day lead to big results!",
+  "Consistency is more powerful than motivation.",
+  "Study today, shine tomorrow!",
+  "Your future is built by what you do today."
+];
+
+function changeQuote() {
+  const randomIndex = Math.floor(Math.random() * quotes.length);
+  document.getElementById("quote").textContent =
+    quotes[randomIndex];
+}
+
+document.getElementById("today").textContent =
+  new Date().toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  });
+
+renderTasks();
+renderSubjects();
+</script>
+</body>
+</html>
